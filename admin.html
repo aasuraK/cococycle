@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>CocoCycle — Demo inquiries</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<style>
+body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:#f8f6ee;color:#17302a}
+.wrap{max-width:1100px;margin:auto;padding:32px 20px}
+h1{font-family:Georgia,serif;font-weight:400;margin:0 0 6px}
+p{color:#5d6e63;line-height:1.6}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+button,a.b{border:0;border-radius:10px;padding:12px 18px;font-weight:700;font-size:14px;cursor:pointer;background:#123a2e;color:#fff;text-decoration:none}
+button.alt{background:#fff;color:#123a2e;border:1px solid #dadfcd}
+.note{background:#fff;border-left:4px solid #f0a35e;padding:12px 16px;border-radius:0 10px 10px 0;font-size:13px}
+.tw{overflow:auto;background:#fff;border:1px solid #dadfcd;border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:11px 14px;border-bottom:1px solid #eef0e5;vertical-align:top}
+th{background:#e8eddd;font-size:11px;letter-spacing:.1em;text-transform:uppercase;position:sticky;top:0}
+td.m{max-width:380px;white-space:pre-wrap}
+.empty{padding:40px;text-align:center;color:#5d6e63}
+</style></head><body><div class="wrap">
+<h1>Demo inquiries</h1>
+<p>Submissions from the website contact form (demo mode). They are stored in <b>this browser only</b>, so open this page on the same device and browser where the form was filled.</p>
+<div class="note">Demo only: this is not a real database and is not private or secure. For live collection from all visitors, use the Google Sheets option in the README.</div>
+<div class="bar"><button id="xl">Download Excel (.xlsx)</button><button class="alt" id="csv">Download CSV</button><button class="alt" id="clear">Clear all</button><a class="b alt" style="background:#fff;color:#123a2e;border:1px solid #dadfcd" href="./">← Back to site</a></div>
+<div class="tw"><table><thead><tr><th>#</th><th>Time</th><th>Name</th><th>Email</th><th>Organization</th><th>Interest</th><th>Message</th></tr></thead><tbody id="rows"></tbody></table><div class="empty" id="empty" hidden>No inquiries yet. Submit the form on the website to see them here.</div></div>
+</div>
+<script>
+const KEY='cococycleDemoLeads';
+const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(_){return[]}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=t=>new Date(t).toLocaleString('en-IN');
+function render(){const l=load();document.getElementById('rows').innerHTML=l.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(fmt(r.time))}</td><td>${esc(r.name)}</td><td>${esc(r.email)}</td><td>${esc(r.organization||'')}</td><td>${esc(r.interest)}</td><td class="m">${esc(r.message)}</td></tr>`).join('');document.getElementById('empty').hidden=l.length>0}
+const head=['Time','Name','Email','Organization','Interest','Message'];
+const matrix=()=>[head,...load().map(r=>[fmt(r.time),r.name,r.email,r.organization||'',r.interest,r.message])];
+function save(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function csv(){const q=v=>'"'+String(v).replace(/"/g,'""')+'"';save(new Blob(['﻿'+matrix().map(r=>r.map(q).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),'cococycle-inquiries.csv')}
+document.getElementById('csv').onclick=()=>{if(!load().length)return alert('No inquiries yet.');csv()};
+document.getElementById('xl').onclick=()=>{
+  if(!load().length)return alert('No inquiries yet.');
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload=()=>{const ws=XLSX.utils.aoa_to_sheet(matrix());ws['!cols']=[{wch:20},{wch:20},{wch:28},{wch:22},{wch:30},{wch:60}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Inquiries');XLSX.writeFile(wb,'cococycle-inquiries.xlsx')};
+  s.onerror=()=>{alert('Could not load the Excel library (offline?). Downloading CSV instead, which opens in Excel.');csv()};
+  document.head.appendChild(s)};
+document.getElementById('clear').onclick=()=>{if(confirm('Delete all saved demo inquiries?')){localStorage.removeItem(KEY);render()}};
+render();
+</script></body></html>
